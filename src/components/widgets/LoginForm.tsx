@@ -1,0 +1,120 @@
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { Mail, Lock, EyeOff, Eye, ArrowRight, Building } from 'lucide-react';
+import FormInput from './FormInput';
+import { Link } from "react-router-dom";
+const LoginForm = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+  };
+
+  return (
+    <div className="w-full flex justify-center lg:justify-start lg:ml-[10%] py-10 px-6 lg:bg-transparent min-h-[70vh] relative">
+      <div className="w-full max-w-[420px] flex flex-col justify-center">
+
+        {/* Mobile Headings */}
+        <div className="mb-8 lg:hidden flex flex-col items-center mt-[-20px]">
+          <div className="w-14 h-14 bg-[#0B1E43] rounded-xl flex items-center justify-center mb-5 shadow-lg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-7 h-7 text-white stroke-[2.5]">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l3-9 5 18 3-9h3" />
+            </svg>
+          </div>
+          <h2 className="text-[26px] font-extrabold tracking-tight text-[#0a152e] mb-1 text-center">Analytical Architect</h2>
+          <p className="text-slate-500 text-sm text-center">Step into the Precision Lens</p>
+        </div>
+
+        {/* Desktop Headings */}
+        <div className="mb-10 hidden lg:block">
+          <h2 className="text-[32px] font-extrabold tracking-tight text-[#0a152e] mb-2 font-sans">Welcome Back</h2>
+          <p className="text-slate-500 font-medium">Enter your credentials to access your dashboard.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-5">
+          <FormInput
+            label="EMAIL ADDRESS"
+            placeholder="name@company.com"
+            type="email"
+            icon={<Mail className="w-[18px] h-[18px]" />}
+          />
+
+          <FormInput
+            label={
+              <div className="flex justify-between items-center w-[calc(100%+8px)] -mr-2">
+                <span className="uppercase text-[10px] tracking-widest text-slate-500">PASSWORD</span>
+                <a href="#" className="normal-case text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors tracking-normal">
+                  forgot Password?
+                </a>
+              </div>
+            }
+            placeholder="••••••••"
+            type={showPassword ? 'text' : 'password'}
+            icon={<Lock className="w-[18px] h-[18px]" />}
+            endIcon={
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="focus:outline-none flex items-center justify-center h-full">
+                {showPassword ? <Eye className="w-[18px] h-[18px]" /> : <EyeOff className="w-[18px] h-[18px]" />}
+              </button>
+            }
+          />
+
+          <div className="pt-2 items-center hidden lg:flex">
+             <input
+               id="remember"
+               type="checkbox"
+               className="w-[16px] h-[16px] text-blue-600 border-slate-300 rounded focus:ring-blue-600 bg-slate-100 cursor-pointer mr-2.5"
+             />
+            <label htmlFor="remember" className="text-[13px] text-slate-600 cursor-pointer font-medium">
+              Keep me logged in for 30 days
+            </label>
+          </div>
+
+          <div className="pt-3 lg:pt-1">
+            <button
+               type="submit"
+               className="w-full bg-[#03102a] text-white py-[14px] lg:py-3.5 rounded-xl lg:rounded-lg font-semibold tracking-wide transition-all duration-200 hover:bg-[#0a1835] focus:ring-4 focus:ring-blue-900/20 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group"
+            >
+              Log In <ArrowRight className="w-5 h-5 lg:hidden ml-1 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </form>
+
+        {/* Separator */}
+        <div className="mt-8 mb-6 relative flex items-center">
+          <div className="border-t border-slate-200 flex-grow"></div>
+          <span className="px-4 text-[11px] lg:text-[12px] text-slate-500 font-semibold bg-transparent">Or continue with</span>
+          <div className="border-t border-slate-200 flex-grow"></div>
+        </div>
+
+        {/* Social Buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <button type="button" className="flex items-center justify-center gap-2 bg-[#f3f4f6] text-slate-700 py-3 lg:py-2.5 rounded-xl lg:rounded-lg font-bold text-[13px] hover:bg-slate-200 transition-colors shadow-sm lg:shadow-none border border-transparent hover:border-slate-300">
+            {/* Using a generic Apple icon on mobile vs Google on desktop per images */}
+            <img src="https://th.bing.com/th?q=Google+New+Logo&w=120&h=120&c=1&rs=1&qlt=70&o=7&cb=1&dpr=1.5&pid=InlineBlock&rm=3&mkt=en-IN&cc=IN&setlang=en&adlt=moderate&t=1&mw=247" alt="Google" className="w-5 h-5 lg:w-[18px] lg:h-[18px]" />
+           
+            <span className="hidden lg:inline">Google</span>
+          </button>
+          <button type="button" className="flex items-center justify-center gap-2 bg-[#f3f4f6] text-slate-700 py-3 lg:py-2.5 rounded-xl lg:rounded-lg font-bold text-[13px] hover:bg-slate-200 transition-colors shadow-sm lg:shadow-none border border-transparent hover:border-slate-300">
+          
+             <img src="https://th.bing.com/th/id/OIP.fHN7JhG4M9KV4Fpg3i9siAAAAA?w=128&h=108&c=7&qlt=90&bgcl=b726bb&r=0&o=6&dpr=1.5&pid=13.1" alt="Microsoft365" className="w-5 h-5 lg:w-[18px] lg:h-[18px]" />
+            <span className="hidden lg:inline">Office 365</span>
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 lg:mt-10 text-center">
+          <p className="text-slate-600 text-[13px] font-medium lg:text-sm">
+            <span className="lg:hidden text-slate-500 tracking-wide">Don't have an account? <Link to="/signup" className="text-[#0a152e] font-bold hover:underline ml-1 text-sm tracking-normal">Sign Up</Link></span>
+            <span className="hidden lg:inline">New to the platform? <Link to="/signup" className="text-[#0a152e] font-extrabold hover:underline ml-1">Create an account</Link></span>
+          </p>
+        </div>
+
+        {/* Copyright (Desktop Only) */}
+        {/* <div className="absolute bottom-8 left-0 w-full hidden lg:flex justify-start ml-[10%] text-[9px] uppercase tracking-[0.1em] text-slate-400 font-bold">
+           © 2024 ANALYTICAL ARCHITECT, ALL RIGHTS RESERVED.
+        </div> */}
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;

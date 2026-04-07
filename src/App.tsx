@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./configs";
-import { Role } from "./types";
+import type { Role } from "./types";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
