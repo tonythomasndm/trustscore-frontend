@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Combine both */
+html, body, #root {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 @layer base {
   body {
     @apply bg-white text-gray-900 font-sans;
