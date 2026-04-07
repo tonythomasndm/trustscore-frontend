@@ -3,8 +3,10 @@ import type { FormEvent } from 'react';
 import { User, Mail, Lock, EyeOff, Eye, ArrowRight, ShieldCheck } from 'lucide-react';
 import FormInput from './FormInput';
 
+
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -141,11 +143,11 @@ const SignupForm = () => {
         </div>
 
         {/* Desktop Footer Badges */}
-        <div className="absolute bottom-10 left-0 w-full hidden lg:flex justify-start ml-[10%] gap-6 px-0 text-[9px] uppercase tracking-[0.15em] text-slate-400 font-bold">
+        {/* <div className="absolute bottom-10 left-0 w-full hidden lg:flex justify-start ml-[10%] gap-6 px-0 text-[9px] uppercase tracking-[0.15em] text-slate-400 font-bold">
           <span>Enterprise Ready</span>
           <span>ISO 27001 Certified</span>
           <span>GDPR Compliant</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -1,1 +1,1 @@
-export { supabase } from "./supaClient.ts";
+export { supabase } from "./supaClient";
