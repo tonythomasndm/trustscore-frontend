@@ -1,17 +1,6 @@
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// Define the Role type inline (or import from a types file)
-type Role = {
-  id: number;
-  name: string;
-};
-
-// Initialize Supabase client directly (matching your instruments example)
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-);
+import { supabase } from "./configs";
+import { Role } from "./types";
 
 function App() {
   const [roles, setRoles] = useState<Role[]>([]);
