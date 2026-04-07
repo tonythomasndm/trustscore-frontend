@@ -1,3 +1,3 @@
 # Trust score
 
-##eum command: npm run dev
+## run command: npm run dev
