@@ -11,8 +11,8 @@ const DecorativeChart = () => {
             <Activity className="w-4 h-4 text-blue-200" />
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-wider text-blue-200/60 uppercase">Current Trajectory</p>
-            <p className="font-semibold text-white">Performance Alpha</p>
+            <p className="text-[10px] font-bold tracking-wider text-blue-200/60 uppercase">Trust Score Trend</p>
+            <p className="font-semibold text-white">Score Overview</p>
           </div>
         </div>
         <div className="text-lg xl:text-xl font-bold text-white">+14.2%</div>

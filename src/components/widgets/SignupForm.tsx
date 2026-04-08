@@ -1,15 +1,72 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { User, Mail, Lock, EyeOff, Eye, ArrowRight, ShieldCheck } from 'lucide-react';
+import { User, Mail, Lock, EyeOff, Eye, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import FormInput from './FormInput';
-
+import { supabase } from '../../configs/supaClient';
 
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [terms, setTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (!terms) {
+      setError('You must agree to the terms and policies.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          { 
+            name, 
+            email, 
+            password, // NOTE: Proceeding with raw password as specifically requested
+            role: 'candidate', // Default role for now, as user said to skip role parts, a fallback helps
+          }
+        ]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      setSuccess(true);
+      // Reset form on success or redirect
+      setName('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setTerms(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        setError(String(err.message));
+      } else {
+        setError('An error occurred during sign up.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -19,14 +76,26 @@ const SignupForm = () => {
         {/* Mobile Headings */}
         <div className="mb-8 lg:hidden text-center lg:text-left mt-[-20px]">
           <h2 className="text-[28px] font-extrabold tracking-tight text-slate-900 mb-1">Create Account</h2>
-          <p className="text-slate-500 text-sm">Start your high-fidelity data journey today.</p>
+          <p className="text-slate-500 text-sm">Start building your trust profile today.</p>
         </div>
 
         {/* Desktop Headings */}
         <div className="mb-10 hidden lg:block">
           <h2 className="text-[32px] font-extrabold tracking-tight text-[#0a152e] mb-2 font-sans">Begin your journey</h2>
-          <p className="text-slate-500 font-medium">Precision-crafted tools for modern analysis.</p>
+          <p className="text-slate-500 font-medium">Build your candidate trust profile in minutes.</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm text-center">
+            Account created successfully! Welcome aboard.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-5">
           <FormInput 
@@ -34,32 +103,40 @@ const SignupForm = () => {
             placeholder="Alexander Pierce" 
             icon={<User className="w-[18px] h-[18px]" />} 
             className="lg:hidden"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           <FormInput 
             label={<span className="hidden lg:inline text-[10px]">FULL NAME</span>} 
             placeholder="Johnathan Sterling" 
             icon={<User className="w-[18px] h-[18px]" />} 
             className="hidden lg:flex"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           
           <FormInput 
-             label={<span className="lg:hidden text-[9px]">STRATEGY EMAIL</span>} 
-             placeholder="a.pierce@precisionlens.com" 
+             label={<span className="lg:hidden text-[9px]">EMAIL ADDRESS</span>} 
+             placeholder="name@company.com" 
              type="email"
              icon={<Mail className="w-[18px] h-[18px]" />} 
              className="lg:hidden"
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
           />
           <FormInput 
              label={<span className="hidden lg:inline text-[10px]">EMAIL ADDRESS</span>} 
-             placeholder="strategy@architect.io" 
+             placeholder="name@company.com" 
              type="email"
              icon={<Mail className="w-[18px] h-[18px]" />} 
              className="hidden lg:flex"
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
           />
           
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-5">
             <FormInput 
-              label={<span className="lg:hidden text-[9px]">SECURE PASSWORD</span>} 
+              label={<span className="lg:hidden text-[9px]">PASSWORD</span>} 
               placeholder="••••••••••••" 
               type={showPassword ? 'text' : 'password'}
               icon={<Lock className="w-[18px] h-[18px]" />} 
@@ -69,6 +146,8 @@ const SignupForm = () => {
                 </button>
               }
               className="lg:hidden"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <FormInput 
               label={<span className="hidden lg:inline text-[10px]">PASSWORD</span>} 
@@ -76,6 +155,8 @@ const SignupForm = () => {
               type={showPassword ? 'text' : 'password'}
               icon={<Lock className="w-[18px] h-[18px]" />} 
               className="hidden lg:flex"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             
             {/* Desktop Confirm Password */}
@@ -85,33 +166,60 @@ const SignupForm = () => {
                  placeholder="••••••••" 
                  type={showPassword ? 'text' : 'password'}
                  icon={<ShieldCheck className="w-[18px] h-[18px]" />} 
+                 value={confirmPassword}
+                 onChange={(e) => setConfirmPassword(e.target.value)}
+               />
+            </div>
+            {/* Mobile Confirm Password */}
+            <div className="lg:hidden w-full">
+               <FormInput 
+                 label={<span className="text-[9px]">CONFIRM PASSWORD</span>} 
+                 placeholder="••••••••••••" 
+                 type={showPassword ? 'text' : 'password'}
+                 icon={<ShieldCheck className="w-[18px] h-[18px]" />} 
+                 value={confirmPassword}
+                 onChange={(e) => setConfirmPassword(e.target.value)}
                />
             </div>
           </div>
 
           <div className="pt-2 flex items-start lg:items-center gap-3 bg-[#f8fafc] lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-slate-100 lg:border-none">
             <div className="flex items-center lg:h-5">
-              <div className="w-[18px] h-[18px] flex items-center justify-center bg-blue-600 rounded-full lg:hidden flex-shrink-0">
-                <ShieldCheck className="w-3 h-3 text-white" />
+              <div 
+                className={`w-[18px] h-[18px] flex items-center justify-center rounded-full lg:hidden flex-shrink-0 ${terms ? 'bg-blue-600' : 'border border-slate-300 bg-slate-100'}`}
+                onClick={() => setTerms(!terms)}
+              >
+                {terms && <ShieldCheck className="w-3 h-3 text-white" />}
               </div>
               <input 
                 id="terms" 
                 type="checkbox" 
                 className="hidden lg:block w-[18px] h-[18px] text-blue-600 border-slate-300 rounded focus:ring-blue-600 bg-slate-100 cursor-pointer" 
+                checked={terms}
+                onChange={(e) => setTerms(e.target.checked)}
               />
             </div>
             <label htmlFor="terms" className="text-[12px] lg:text-xs text-slate-700 lg:text-slate-600 leading-relaxed cursor-pointer font-medium">
               <span className="hidden lg:inline">I agree to the <a href="#" className="font-semibold text-slate-900 border-b border-transparent hover:border-slate-900 transition-colors">Terms of Service</a> and <a href="#" className="font-semibold text-slate-900 border-b border-transparent hover:border-slate-900 transition-colors">Privacy Policy</a>.</span>
-              <span className="inline lg:hidden text-slate-600 text-[11.5px]">By creating an account, you agree to our <a href="#" className="font-bold text-[#0B1E43]">Terms of Strategy</a> and acknowledge our <a href="#" className="font-bold text-[#0B1E43]">Data Privacy Protocol</a>.</span>
+              <span className="inline lg:hidden text-slate-600 text-[11.5px]">By creating an account, you agree to our <a href="#" className="font-bold text-[#0B1E43]">Terms of Service</a> and acknowledge our <a href="#" className="font-bold text-[#0B1E43]">Privacy Policy</a>.</span>
             </label>
           </div>
 
           <div className="pt-3">
             <button 
               type="submit" 
-              className="w-full bg-[#03102a] text-white py-[14px] lg:py-3.5 rounded-xl lg:rounded-lg font-semibold tracking-wide transition-all duration-200 hover:bg-[#0a1835] focus:ring-4 focus:ring-blue-900/20 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group"
+              disabled={loading}
+              className="w-full bg-[#03102a] text-white py-[14px] lg:py-3.5 rounded-xl lg:rounded-lg font-semibold tracking-wide transition-all duration-200 hover:bg-[#0a1835] focus:ring-4 focus:ring-blue-900/20 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Create Account <ArrowRight className="w-4 h-4 lg:hidden ml-0.5 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Creating Account...
+                </>
+              ) : (
+                <>
+                  Create Account <ArrowRight className="w-4 h-4 lg:hidden ml-0.5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -119,7 +227,7 @@ const SignupForm = () => {
         {/* Separator Mobile */}
         <div className="mt-8 mb-6 relative flex items-center lg:hidden">
           <div className="border-t border-slate-200 flex-grow"></div>
-          <span className="px-4 text-[10px] uppercase tracking-widest text-slate-400 font-extrabold bg-[#F8FAFC]">Partner Identity</span>
+          <span className="px-4 text-[10px] uppercase tracking-widest text-slate-400 font-extrabold bg-[#F8FAFC]">Or continue with</span>
           <div className="border-t border-slate-200 flex-grow"></div>
         </div>
 
@@ -137,8 +245,8 @@ const SignupForm = () => {
 
         <div className="mt-8 text-center">
           <p className="text-slate-600 text-[13px] font-medium">
-            <span className="hidden lg:inline">Already have an account? <a href="#" className="font-extrabold text-[#0a152e] hover:underline">Sign in here</a></span>
-            <span className="inline lg:hidden">Already part of the ecosystem? <a href="#" className="font-extrabold text-[#0B1E43] hover:underline">Sign In</a></span>
+            <span className="hidden lg:inline">Already have an account? <a href="/login" className="font-extrabold text-[#0a152e] hover:underline">Sign in here</a></span>
+            <span className="inline lg:hidden">Already have an account? <a href="/login" className="font-extrabold text-[#0B1E43] hover:underline">Sign In</a></span>
           </p>
         </div>
 

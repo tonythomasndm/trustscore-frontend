@@ -9,7 +9,7 @@ const FloatingUserBadge = () => {
            <img src="https://i.pravatar.cc/100?img=11" alt="User" />
         </div>
       </div>
-      <span className="text-[9px] xl:text-[10px] font-bold tracking-widest text-[#0a152e] uppercase whitespace-nowrap">500+ Strategists Joined</span>
+      <span className="text-[9px] xl:text-[10px] font-bold tracking-widest text-[#0a152e] uppercase whitespace-nowrap">500+ Professionals Verified</span>
     </div>
   );
 };
