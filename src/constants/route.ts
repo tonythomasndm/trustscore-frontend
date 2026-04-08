@@ -4,5 +4,7 @@ export const ROUTES = {
   SIGNUP: "/signup",
   DASHBOARD: "/dashboard",
   LOADING: "/loading",
-  ERROR: "/error"
+  ERROR: "/error",
+  FORGOT_PASSWORD: "/forgot-password",
+  PROFILE: "/profile"
 } as const;
