@@ -1,12 +1,58 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Mail, Lock, EyeOff, Eye, ArrowRight, Building } from 'lucide-react';
+import { Mail, Lock, EyeOff, Eye, ArrowRight, Loader2 } from 'lucide-react';
 import FormInput from './FormInput';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from '../../configs/supaClient';
+
 const LoginForm = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const handleSubmit = (e: FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Direct database query against public.users (skipping auth as requested)
+      const { data, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
+
+      if (fetchError || !data) {
+        throw new Error('Invalid email or incorrect password.');
+      }
+
+      // Save user to localStorage for session
+      localStorage.setItem('user', JSON.stringify(data));
+      setSuccess(true);
+      // Redirect to profile after a brief delay
+      setTimeout(() => navigate('/profile'), 1000);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        setError(String(err.message));
+      } else {
+        setError('An error occurred during log in.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -14,14 +60,9 @@ const LoginForm = () => {
       <div className="w-full max-w-[420px] flex flex-col justify-center">
 
         {/* Mobile Headings */}
-        <div className="mb-8 lg:hidden flex flex-col items-center mt-[-20px]">
-          <div className="w-14 h-14 bg-[#0B1E43] rounded-xl flex items-center justify-center mb-5 shadow-lg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-7 h-7 text-white stroke-[2.5]">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l3-9 5 18 3-9h3" />
-            </svg>
-          </div>
-          <h2 className="text-[26px] font-extrabold tracking-tight text-[#0a152e] mb-1 text-center">Analytical Architect</h2>
-          <p className="text-slate-500 text-sm text-center">Step into the Precision Lens</p>
+        <div className="mb-8 lg:hidden text-center lg:text-left mt-[-20px]">
+          <h2 className="text-[28px] font-extrabold tracking-tight text-slate-900 mb-1">Welcome Back</h2>
+          <p className="text-slate-500 text-sm">Enter your credentials to continue.</p>
         </div>
 
         {/* Desktop Headings */}
@@ -29,6 +70,18 @@ const LoginForm = () => {
           <h2 className="text-[32px] font-extrabold tracking-tight text-[#0a152e] mb-2 font-sans">Welcome Back</h2>
           <p className="text-slate-500 font-medium">Enter your credentials to access your dashboard.</p>
         </div>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm text-center">
+            Login successful! Welcome back.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-5">
           <FormInput
@@ -36,20 +89,24 @@ const LoginForm = () => {
             placeholder="name@company.com"
             type="email"
             icon={<Mail className="w-[18px] h-[18px]" />}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <FormInput
             label={
               <div className="flex justify-between items-center w-[calc(100%+8px)] -mr-2">
                 <span className="uppercase text-[10px] tracking-widest text-slate-500">PASSWORD</span>
-                <a href="#" className="normal-case text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors tracking-normal">
-                  forgot Password?
-                </a>
+                <Link to="/forgot-password" className="normal-case text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors tracking-normal">
+                  Forgot Password?
+                </Link>
               </div>
             }
             placeholder="••••••••"
             type={showPassword ? 'text' : 'password'}
             icon={<Lock className="w-[18px] h-[18px]" />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             endIcon={
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="focus:outline-none flex items-center justify-center h-full">
                 {showPassword ? <Eye className="w-[18px] h-[18px]" /> : <EyeOff className="w-[18px] h-[18px]" />}
@@ -71,9 +128,18 @@ const LoginForm = () => {
           <div className="pt-3 lg:pt-1">
             <button
                type="submit"
-               className="w-full bg-[#03102a] text-white py-[14px] lg:py-3.5 rounded-xl lg:rounded-lg font-semibold tracking-wide transition-all duration-200 hover:bg-[#0a1835] focus:ring-4 focus:ring-blue-900/20 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group"
+               disabled={loading}
+               className="w-full bg-[#03102a] text-white py-[14px] lg:py-3.5 rounded-xl lg:rounded-lg font-semibold tracking-wide transition-all duration-200 hover:bg-[#0a1835] focus:ring-4 focus:ring-blue-900/20 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Log In <ArrowRight className="w-5 h-5 lg:hidden ml-1 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <>
+                   <Loader2 className="w-5 h-5 animate-spin" /> Logging in...
+                </>
+              ) : (
+                <>
+                   Log In <ArrowRight className="w-5 h-5 lg:hidden ml-1 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -110,7 +176,7 @@ const LoginForm = () => {
 
         {/* Copyright (Desktop Only) */}
         {/* <div className="absolute bottom-8 left-0 w-full hidden lg:flex justify-start ml-[10%] text-[9px] uppercase tracking-[0.1em] text-slate-400 font-bold">
-           © 2024 ANALYTICAL ARCHITECT, ALL RIGHTS RESERVED.
+           © 2024 TRUSTSCORE, ALL RIGHTS RESERVED.
         </div> */}
       </div>
     </div>
