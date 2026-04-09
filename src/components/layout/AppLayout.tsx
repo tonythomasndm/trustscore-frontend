@@ -1,7 +1,7 @@
 
 import { Sidebar } from './Sidebar';
 import { MobileHeader } from './MobileHeader';
-import { MobileBottomNav } from './MobileBottomNav';
+
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export const AppLayout = ({ children, headerTitle = "System Status", hideMobileN
       <Sidebar />
 
       {/* Main Content Wrapper */}
-      <div className="flex-1 flex flex-col md:ml-64 w-full min-h-screen bg-pink-300">
+      <div className="flex-1 flex flex-col md:ml-64 w-full min-h-screen ">
         {/* Mobile Header, hidden on desktop */}
         {!hideMobileNavs && <MobileHeader title={headerTitle} />}
 
@@ -30,7 +30,7 @@ export const AppLayout = ({ children, headerTitle = "System Status", hideMobileN
         </main>
 
         {/* Mobile Bottom Nav, hidden on desktop */}
-        {!hideMobileNavs && <MobileBottomNav />}
+        {!hideMobileNavs }
       </div>
     </div>
   );
