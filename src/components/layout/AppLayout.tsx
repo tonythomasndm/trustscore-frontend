@@ -1,6 +1,5 @@
 
 import { Sidebar } from './Sidebar';
-import { MobileHeader } from './MobileHeader';
 
 
 interface AppLayoutProps {
@@ -17,9 +16,6 @@ export const AppLayout = ({ children, headerTitle = "System Status", hideMobileN
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col md:ml-64 w-full min-h-screen ">
-        {/* Mobile Header, hidden on desktop */}
-        {!hideMobileNavs && <MobileHeader title={headerTitle} />}
-
         {/* Main Content Area */}
         <main className={`flex-1 flex flex-col pt-16 md:pt-0 pb-16 md:pb-0 relative overflow-y-auto border`}>
           
