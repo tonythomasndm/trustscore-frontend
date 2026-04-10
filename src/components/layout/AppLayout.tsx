@@ -25,8 +25,7 @@ export const AppLayout = ({ children, headerTitle = "System Status", hideMobileN
            </div>
         </main>
 
-        {/* Mobile Bottom Nav, hidden on desktop */}
-        {!hideMobileNavs }
+       
       </div>
     </div>
   );
