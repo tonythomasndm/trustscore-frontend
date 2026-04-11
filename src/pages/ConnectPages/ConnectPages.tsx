@@ -107,7 +107,7 @@ const ConnectPages = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 pb-24">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-8">
         
         <div className="mb-8">
           <h1 className="text-2xl sm:text-[28px] font-extrabold text-[#0a152e] tracking-tight leading-tight mb-3">
@@ -372,30 +372,7 @@ const ConnectPages = () => {
         </div>
       </main>
 
-      {/* Mock Bottom Nav (matches design) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex justify-between sm:justify-center sm:gap-16 items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-20">
-         <button className="flex flex-col items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors">
-            <Database className="w-5 h-5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Store</span>
-         </button>
-         <button className="flex flex-col items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors">
-            <Search className="w-5 h-5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Analysis</span>
-         </button>
-         <button className="flex flex-col items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors">
-            <UserIcon className="w-5 h-5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Candidates</span>
-         </button>
-         <button className="flex flex-col items-center gap-1 text-blue-600 bg-blue-50 px-4 py-1.5 rounded-lg transition-colors">
-            <div className="w-5 h-5 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="w-5 h-5 text-blue-600">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-            </div>
-            <span className="text-[9px] font-bold uppercase tracking-wider">Connect</span>
-         </button>
-      </div>
+
 
     </div>
   );
