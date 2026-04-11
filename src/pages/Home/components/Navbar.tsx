@@ -31,6 +31,13 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!user);
+  }, []);
+
   return (
     <nav className="w-full bg-[#f8fafc] lg:bg-white border-b border-slate-100 sticky top-0 z-50">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
