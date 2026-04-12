@@ -14,9 +14,7 @@ import {
 import { ROUTES } from "../../constants";
 
 const TOTAL_DURATION_MS = 30000; // 30 seconds to reach 100%
-const MAX_WAIT_MS = 240000; // 2 minutes max before retry screen
-const POLL_INTERVAL_MS = 5000;
-const REQUEST_TIMEOUT_MS = 10000;
+const MAX_WAIT_MS = 240000; // 4 minutes max before retry screen
 const SCORE_API_URL =
   "https://trescoml-production.up.railway.app/generate-score";
 
@@ -26,6 +24,7 @@ const Processing = () => {
   const [statusIndex, setStatusIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [requestCycle, setRequestCycle] = useState(0);
   const startTimeRef = useRef<number>(Date.now());
   const isCompleteRef = useRef(false);
@@ -33,8 +32,6 @@ const Processing = () => {
   const animFrameRef = useRef<number | null>(null);
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const overallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const statusMessages = [
@@ -84,16 +81,6 @@ const Processing = () => {
       overallTimeoutRef.current = null;
     }
 
-    if (pollTimeoutRef.current) {
-      clearTimeout(pollTimeoutRef.current);
-      pollTimeoutRef.current = null;
-    }
-
-    if (requestTimeoutRef.current) {
-      clearTimeout(requestTimeoutRef.current);
-      requestTimeoutRef.current = null;
-    }
-
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -114,20 +101,18 @@ const Processing = () => {
     }
   }, []);
 
-  const pollForScore = useCallback(async () => {
+  const requestScore = useCallback(async () => {
     const userId = getStoredUserId();
     if (!userId || isCompleteRef.current || hasTimedOutRef.current) {
       hasTimedOutRef.current = true;
       setHasTimedOut(true);
+      setRequestError("Missing user session. Please log in and retry.");
       cleanupPendingWork();
       return;
     }
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
-    requestTimeoutRef.current = setTimeout(() => {
-      abortController.abort();
-    }, REQUEST_TIMEOUT_MS);
 
     try {
       const response = await fetch(SCORE_API_URL, {
@@ -139,11 +124,16 @@ const Processing = () => {
         signal: abortController.signal,
       });
 
-      console.log("RAW RESPONSE:", response);
-      console.log("STATUS:", response.status);
+      const rawBody = await response.text();
+      let data: Record<string, unknown> | null = null;
+      if (rawBody) {
+        try {
+          data = JSON.parse(rawBody) as Record<string, unknown>;
+        } catch {
+          data = null;
+        }
+      }
 
-      const data = await response.json();
-      console.log("API DATA:", data);
       if (data?.status === "success" && data?.data) {
         localStorage.setItem("trustscore_data", JSON.stringify(data.data));
         isCompleteRef.current = true;
@@ -152,23 +142,33 @@ const Processing = () => {
         cleanupPendingWork();
         return;
       }
+
+      const backendError =
+        (data?.error as { message?: string } | undefined)?.message ??
+        (typeof data?.message === "string" ? data.message : "");
+
+      const fallbackMessage = response.ok
+        ? "Score generation is still processing. Please retry once after a short wait."
+        : `Server responded with ${response.status}. Please retry.`;
+
+      hasTimedOutRef.current = true;
+      setHasTimedOut(true);
+      setRequestError(backendError || fallbackMessage);
+      cleanupPendingWork();
+      return;
     } catch (error) {
-      if ((error as Error).name !== "AbortError") {
-        console.error("Error while polling score API:", error);
+      if ((error as Error).name === "AbortError") {
+        return;
       }
+
+      console.error("Error while requesting score API:", error);
+      hasTimedOutRef.current = true;
+      setHasTimedOut(true);
+      setRequestError("Unable to reach the scoring service. Please retry.");
+      cleanupPendingWork();
+      return;
     } finally {
-      if (requestTimeoutRef.current) {
-        clearTimeout(requestTimeoutRef.current);
-        requestTimeoutRef.current = null;
-      }
-
       abortControllerRef.current = null;
-    }
-
-    if (!isCompleteRef.current && !hasTimedOutRef.current) {
-      pollTimeoutRef.current = setTimeout(() => {
-        void pollForScore();
-      }, POLL_INTERVAL_MS);
     }
   }, [cleanupPendingWork, getStoredUserId]);
 
@@ -182,6 +182,7 @@ const Processing = () => {
     setStatusIndex(0);
     setIsComplete(false);
     setHasTimedOut(false);
+    setRequestError(null);
 
     animFrameRef.current = requestAnimationFrame(updateProgress);
     statusIntervalRef.current = setInterval(() => {
@@ -191,15 +192,18 @@ const Processing = () => {
     overallTimeoutRef.current = setTimeout(() => {
       hasTimedOutRef.current = true;
       setHasTimedOut(true);
+      setRequestError(
+        "Score generation took too long. Please retry in a moment.",
+      );
       cleanupPendingWork();
     }, MAX_WAIT_MS);
 
-    void pollForScore();
+    void requestScore();
 
     return () => {
       cleanupPendingWork();
     };
-  }, [cleanupPendingWork, pollForScore, requestCycle, updateProgress]);
+  }, [cleanupPendingWork, requestCycle, requestScore, updateProgress]);
 
   const handleRetry = () => {
     cleanupPendingWork();
@@ -264,7 +268,7 @@ const Processing = () => {
               {isComplete
                 ? "Analysis Complete!"
                 : hasTimedOut
-                  ? "Request Timed Out"
+                  ? "Request Failed"
                   : "Processing Profile"}
             </h1>
             <p className="text-blue-200/60 font-medium tracking-wide flex items-center justify-center gap-2 uppercase text-[10px]">
@@ -275,7 +279,8 @@ const Processing = () => {
                 </>
               ) : hasTimedOut ? (
                 <>
-                  <RotateCw className="w-3 h-3" /> Connection timed out
+                  <RotateCw className="w-3 h-3" />
+                  {requestError ?? "Connection timed out"}
                 </>
               ) : (
                 <>
