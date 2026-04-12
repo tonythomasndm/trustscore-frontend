@@ -122,15 +122,14 @@ export const PlatformWeightageWidget = () => {
     .map((p) => {
       const rawScore = getScore(p.key, p.defaultScore);
 
-      // ❌ skip if -1
       if (rawScore === -1) return null;
 
       return {
         ...p,
-        score: Math.round(rawScore / 10), // ✅ divide by 10
+        score: Math.round(rawScore / 10),
       };
     })
-    .filter(Boolean); // remove null values
+    .filter((p): p is NonNullable<typeof p> => p !== null);
 
   return (
     <div className="p-8 bg-white border shadow-sm rounded-3xl border-slate-200/60">
