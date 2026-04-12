@@ -9,7 +9,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 export interface ExtractedLinks {
   linkedin: string;
   github: string;
-  kaggle: string;
+  hackerrank: string;
   leetcode: string;
   stackoverflow: string;
   behance: string;
@@ -20,7 +20,7 @@ export interface ExtractedLinks {
 const URL_PATTERNS: Record<string, RegExp> = {
   linkedin: /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+\/?/gi,
   github: /(?:https?:\/\/)?(?:www\.)?github\.com\/[\w-]+\/?/gi,
-  kaggle: /(?:https?:\/\/)?(?:www\.)?kaggle\.com\/[\w-]+\/?/gi,
+  hackerrank: /(?:https?:\/\/)?(?:www\.)?hackerrank\.com\/(?:profile\/)?[\w-]+\/?/gi,
   leetcode: /(?:https?:\/\/)?(?:www\.)?leetcode\.com\/(?:u\/)?[\w-]+\/?/gi,
   stackoverflow: /(?:https?:\/\/)?(?:www\.)?stackoverflow\.com\/users\/[\w-/]+\/?/gi,
   behance: /(?:https?:\/\/)?(?:www\.)?behance\.net\/[\w-]+\/?/gi,
@@ -67,7 +67,7 @@ export async function parseResumeForLinks(file: File): Promise<ExtractedLinks> {
   const result: ExtractedLinks = {
     linkedin: '',
     github: '',
-    kaggle: '',
+    hackerrank: '',
     leetcode: '',
     stackoverflow: '',
     behance: '',

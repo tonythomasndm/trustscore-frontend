@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   CheckCircle2,
   AlertCircle,
+  Terminal,
 } from "lucide-react";
 import {
   parseResumeForLinks,
@@ -27,7 +28,7 @@ const ConnectPages = () => {
   const [links, setLinks] = useState<ExtractedLinks>({
     linkedin: "",
     github: "",
-    kaggle: "",
+    hackerrank: "",
     leetcode: "",
     stackoverflow: "",
     behance: "",
@@ -36,7 +37,6 @@ const ConnectPages = () => {
   });
 
   const [additionalRepos, setAdditionalRepos] = useState({
-    stackoverflow: false,
     behance: false,
     personalWebsite: false,
     otherUrl: false,
@@ -63,7 +63,6 @@ const ConnectPages = () => {
 
       // Update additional toggles based on what was found
       setAdditionalRepos({
-        stackoverflow: !!extractedLinks.stackoverflow,
         behance: !!extractedLinks.behance,
         personalWebsite: !!extractedLinks.personalWebsite,
         otherUrl: extractedLinks.other.length > 0,
@@ -214,29 +213,56 @@ const ConnectPages = () => {
             </div>
           </div>
 
-          {/* Kaggle Card */}
+          {/* StackOverflow Card */}
           <div className="p-5 bg-white border shadow-sm rounded-2xl sm:p-6 border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-50">
-                <Database className="w-5 h-5 text-cyan-600" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-50">
+                <Database className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Kaggle</h3>
+                <h3 className="font-bold text-slate-800">StackOverflow</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Fetch data science rankings and competition results.
+                  Showcase community contributions and expertise.
                 </p>
               </div>
             </div>
             <div className="mt-4">
               <input
                 type="url"
-                placeholder="kaggle.com/username"
-                value={links.kaggle}
-                onChange={(e) => handleChange("kaggle", e.target.value)}
-                className="w-full px-4 py-3 text-sm font-medium transition-all border bg-slate-50 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 text-slate-700 placeholder:text-slate-400 placeholder:font-normal"
+                placeholder="stackoverflow.com/users/..."
+                value={links.stackoverflow}
+                onChange={(e) => handleChange("stackoverflow", e.target.value)}
+                className="w-full px-4 py-3 text-sm font-medium transition-all border bg-slate-50 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-700 placeholder:text-slate-400 placeholder:font-normal"
               />
               <button className="w-full py-3 mt-3 text-sm font-semibold transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl">
-                {links.kaggle ? "Link Added" : "Add link"}
+                {links.stackoverflow ? "Link Added" : "Add link"}
+              </button>
+            </div>
+          </div>
+
+          {/* HackerRank Card */}
+          <div className="p-5 bg-white border shadow-sm rounded-2xl sm:p-6 border-slate-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50">
+                <Terminal className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">HackerRank</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Verify coding certifications and challenge scores.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <input
+                type="url"
+                placeholder="hackerrank.com/profile/username"
+                value={links.hackerrank}
+                onChange={(e) => handleChange("hackerrank", e.target.value)}
+                className="w-full px-4 py-3 text-sm font-medium transition-all border bg-slate-50 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 placeholder:text-slate-400 placeholder:font-normal"
+              />
+              <button className="w-full py-3 mt-3 text-sm font-semibold transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl">
+                {links.hackerrank ? "Link Added" : "Add link"}
               </button>
             </div>
           </div>
@@ -278,25 +304,6 @@ const ConnectPages = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() =>
-                  setAdditionalRepos((p) => ({
-                    ...p,
-                    stackoverflow: !p.stackoverflow,
-                  }))
-                }
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                  additionalRepos.stackoverflow
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <Database className="w-4 h-4" /> Stack Overflow
-                {additionalRepos.stackoverflow && (
-                  <CheckCircle2 className="w-3.5 h-3.5 ml-1" />
-                )}
-              </button>
-
               <button
                 onClick={() =>
                   setAdditionalRepos((p) => ({ ...p, behance: !p.behance }))
@@ -351,17 +358,6 @@ const ConnectPages = () => {
 
             {/* Expanded Inputs based on toggles */}
             <div className="mt-5 space-y-3">
-              {additionalRepos.stackoverflow && (
-                <input
-                  type="url"
-                  placeholder="stackoverflow.com/users/..."
-                  value={links.stackoverflow}
-                  onChange={(e) =>
-                    handleChange("stackoverflow", e.target.value)
-                  }
-                  className="w-full px-4 py-2 text-sm border bg-slate-50 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              )}
               {additionalRepos.behance && (
                 <input
                   type="url"
@@ -401,7 +397,7 @@ const ConnectPages = () => {
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6 pb-20">
             <button
-              onClick={() => navigate("/processing")}
+              onClick={() => navigate(-1)}
               className="px-6 py-3 font-medium transition-colors bg-white border rounded-xl text-slate-600 border-slate-200 hover:bg-slate-50"
             >
               Skip
