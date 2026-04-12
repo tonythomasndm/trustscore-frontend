@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { User } from "lucide-react";
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("U");
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +27,12 @@ const Navbar = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     setIsLoggedIn(false);
@@ -31,7 +40,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full bg-[#f8fafc] lg:bg-white border-b border-slate-100 sticky top-0 z-50">
+    <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white/80 backdrop-blur-xl shadow-lg shadow-slate-200/40 border-b border-slate-100/50' 
+        : 'bg-transparent'
+    }`}>
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -92,10 +105,24 @@ const Navbar = () => {
                 to="/login"
                 className="bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f]"
               >
-                Login
+                Analysis
               </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-[13px] font-semibold text-slate-600 hover:text-[#0a152e]"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-[13px] font-semibold bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f]"
+                >
+                  Get Started
+                </Link>
+              </>
             )}
-          </div>
 
           {/* Mobile Menu Button */}
           <button
