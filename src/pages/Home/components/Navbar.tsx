@@ -1,30 +1,34 @@
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X, User, ChevronDown, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("U");
+  const [isLoggedIn] = useState(() => !!localStorage.getItem("user"));
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const firstName = user?.name ? user.name.split(' ')[0] : 'User';
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      setIsLoggedIn(true);
-      try {
-        const parsed = JSON.parse(user);
-        setUserName(parsed?.name || parsed?.email || "U");
-      } catch {
-        setUserName(user);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
-    } else {
-      setIsLoggedIn(false);
-    }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -35,8 +39,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    navigate("/login");
+    window.location.href = "/login";
   };
 
   return (
@@ -78,35 +81,43 @@ const Navbar = () => {
           {/* Desktop Auth */}
           <div className="hidden md:flex items-center space-x-5">
             {isLoggedIn ? (
-              <div className="relative flex items-center gap-4">
-                <div
-                  className="pl-4 border-l border-slate-200 cursor-pointer"
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+              <>
+                <Link
+                  to="/connect"
+                  className="text-[13px] font-semibold bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f] transition-all shadow-md mr-1"
                 >
-                  <div className="w-8 h-8 bg-[#1c3c66] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                </div>
+                  Analysis
+                </Link>
+                
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-100 transition"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="capitalize">{firstName}</span>
+                    <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
-                {isProfileOpen && (
-                  <div className="absolute right-0 top-10 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 w-full text-red-500 hover:bg-slate-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f]"
-              >
-                Analysis
-              </Link>
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 w-48 py-2 mt-2 bg-white border border-slate-100 rounded-xl shadow-lg shadow-slate-200/50 flex flex-col z-50">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:text-[#0a152e] hover:bg-slate-50 transition-colors w-full"
+                      >
+                        <User className="w-4 h-4" /> Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 justify-start hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" /> Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <Link
@@ -142,29 +153,47 @@ const Navbar = () => {
           <a href="#pricing" className="block py-2">Pricing</a>
           <a href="#resources" className="block py-2">Resources</a>
 
-          {isLoggedIn ? (
-            <>
-              <button
-                onClick={() => navigate("/connect")}
-                className="w-full mt-4 bg-gray-200 py-2 rounded"
-              >
-                Analysis
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full mt-2 bg-red-100 text-red-600 py-2 rounded"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              className="block mt-4 text-center bg-[#1c3c66] text-white py-2 rounded"
-            >
-              Login
-            </Link>
-          )}
+          <div className="flex flex-col gap-3 px-3 pt-6 mt-6 border-t border-slate-200">
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/connect"
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold bg-[#1c3c66] text-white rounded-xl"
+                >
+                  Analysis
+                </Link>
+                <Link
+                  to="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full text-center px-4 py-3.5 text-[15px] font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl"
+                >
+                  <User className="w-[18px] h-[18px]" /> Profile (<span className="capitalize">{firstName}</span>)
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-center gap-2 w-full text-center px-4 py-3.5 text-[15px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl transition-colors"
+                >
+                  <LogOut className="w-[18px] h-[18px]" /> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold bg-[#1c3c66] text-white rounded-xl"
+                >
+                  Get Started Today
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
     </nav>

@@ -39,7 +39,7 @@ const SignupForm = () => {
     setError(null);
 
     try {
-      const { error: insertError } = await supabase
+      const { data, error: insertError } = await supabase
         .from('users')
         .insert([
           { 
@@ -48,7 +48,9 @@ const SignupForm = () => {
             password, // NOTE: Proceeding with raw password as specifically requested
             role,
           }
-        ]);
+        ])
+        .select()
+        .single();
 
       if (insertError) {
         throw insertError;
@@ -57,7 +59,7 @@ const SignupForm = () => {
       setSuccess(true);
       
       // Store user info in localStorage for mock persistence (required by Profile page)
-      localStorage.setItem('user', JSON.stringify({ name, email, role }));
+      localStorage.setItem('user', JSON.stringify({ ...data }));
 
       // Reset form or redirect
       setTimeout(() => {
