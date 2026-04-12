@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Shield } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { User } from "lucide-react";
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +39,14 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!user);
+  }, []);
+
+
   return (
     <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${
       scrolled 
@@ -49,120 +59,120 @@ const Navbar = () => {
           {/* Logo */}
           <div
             onClick={() => navigate("/")}
-            className="flex items-center flex-shrink-0 gap-2.5 cursor-pointer group"
+            className="flex items-center flex-shrink-0 gap-2 cursor-pointer"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-[#0f1d35] to-[#1a365d] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/30 transition-shadow">
-              <Shield className="w-4.5 h-4.5 text-blue-400" />
-            </div>
+            <img src="/Logo.svg" alt="logo" className="w-8 h-8 object-contain" />
             <span className="text-xl font-extrabold text-[#0a152e] tracking-tight">
-              TrustScore
+               Tresco
             </span>
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-1">
-            {[
-              { label: "How it works", href: "#how-it-works" },
-              { label: "Solutions", href: "#solutions" },
-              { label: "Pricing", href: "#pricing" },
-              { label: "Resources", href: "#resources" }
-            ].map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="text-sm font-medium text-slate-500 hover:text-[#0a152e] px-4 py-2 rounded-lg hover:bg-slate-50 transition-all"
-              >
-                {item.label}
-              </a>
-            ))}
+          <div className="hidden md:flex items-center space-x-8">
+            <a href="#how-it-works" className="text-sm font-medium text-slate-500 hover:text-[#0a152e]">
+              How it works
+            </a>
+            <a href="#solutions" className="text-sm font-medium text-slate-500 hover:text-[#0a152e]">
+              Solutions
+            </a>
+            <a href="#pricing" className="text-sm font-medium text-slate-500 hover:text-[#0a152e]">
+              Pricing
+            </a>
+            <a href="#resources" className="text-sm font-medium text-slate-500 hover:text-[#0a152e]">
+              Resources
+            </a>
           </div>
 
           {/* Desktop Auth */}
-          <div className="hidden md:flex items-center space-x-4">
-            {isLoggedIn ? (
-              <div className="relative flex items-center gap-4">
-                <div
-                  className="cursor-pointer"
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                >
-                  <div className="w-9 h-9 bg-gradient-to-br from-[#1a365d] to-[#2b5a9e] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 transition-all hover:scale-105">
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                </div>
+          <div className="items-center hidden space-x-5 md:flex">
 
-                {isProfileOpen && (
-                  <div className="absolute right-0 top-12 w-36 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-2xl z-[100] py-1.5 animate-fade-in-up">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2.5 px-4 py-2.5 w-full text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
+    
+      
+  
+    
+  {isLoggedIn && (
+    <Link
+      to="/profile"
+      className="flex items-center gap-2 text-sm font-medium text-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-100 transition"
+    >
+      <User className="w-4 h-4" />
+      Profile
+    </Link>
+  )}        
+       
+
+
+            {isLoggedIn ? (
               <Link
-                to="/login"
-                className="bg-gradient-to-r from-[#1a365d] to-[#2b5a9e] text-white px-6 py-2.5 rounded-xl hover:from-[#122b4f] hover:to-[#1e4a8a] font-semibold text-sm transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95"
+                to="/connect"
+                className="text-[13px] font-semibold bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f] transition-all shadow-md"
               >
-                Login
+                Analysis
               </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-[13px] font-semibold text-slate-600 hover:text-[#0a152e]"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-[13px] font-semibold bg-[#1c3c66] text-white px-5 py-2.5 rounded-lg hover:bg-[#122b4f]"
+                >
+                  Get Started
+                </Link>
+              </>
             )}
+
+
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-slate-800 p-2 hover:bg-slate-100 rounded-xl transition-colors"
+            className="md:hidden text-slate-800"
           >
-            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isOpen ? <X /> : <Menu />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-100 px-4 pb-6 pt-2 animate-fade-in-up shadow-xl">
-          {[
-            { label: "How it works", href: "#how-it-works" },
-            { label: "Solutions", href: "#solutions" },
-            { label: "Pricing", href: "#pricing" },
-            { label: "Resources", href: "#resources" }
-          ].map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="block py-3 px-3 text-sm font-medium text-slate-600 hover:text-[#0a152e] hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              {item.label}
-            </a>
-          ))}
+        <div className="md:hidden bg-[#f8fafc] border-t px-4 pb-6">
+          <a href="#how-it-works" className="block py-2">How it works</a>
+          <a href="#solutions" className="block py-2">Solutions</a>
+          <a href="#pricing" className="block py-2">Pricing</a>
+          <a href="#resources" className="block py-2">Resources</a>
 
-          {isLoggedIn ? (
-            <>
-              <button
-                onClick={() => navigate("/connect")}
-                className="w-full mt-4 bg-slate-100 hover:bg-slate-200 py-3 rounded-xl text-sm font-semibold transition-colors"
-              >
-                Analysis
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full mt-2 bg-red-50 text-red-600 py-3 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              className="block mt-4 text-center bg-gradient-to-r from-[#1a365d] to-[#2b5a9e] text-white py-3 rounded-xl font-semibold text-sm"
-            >
-              Login
-            </Link>
-          )}
+            <div className="flex flex-col gap-3 px-3 pt-6 mt-6 border-t border-slate-200">
+              {isLoggedIn ? (
+                <Link
+                  to="/connect"
+                  className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold bg-[#1c3c66] text-white rounded-xl"
+                >
+                  Analysis
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="block w-full text-center px-4 py-3.5 text-[15px] font-semibold bg-[#1c3c66] text-white rounded-xl"
+                  >
+                    Get Started Today
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </nav>
