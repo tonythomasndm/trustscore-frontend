@@ -1,5 +1,4 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { TrendingUp, Award } from "lucide-react";
 
 const getStoredData = () => {
   try {
@@ -83,22 +82,6 @@ export const AuthenticityWidget = () => {
             This candidate demonstrates strong technical credibility across all
             connected platforms with verified contributions.
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
-            <div className="flex items-center gap-2 px-4 py-2 border bg-emerald-500/15 border-emerald-400/20 rounded-xl">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm font-bold text-emerald-300">+12.3%</span>
-              <span className="text-[10px] text-emerald-300/60 font-medium">
-                vs last
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 border bg-white/5 border-white/10 rounded-xl">
-              <Award className="w-4 h-4 text-blue-300" />
-              <span className="text-sm font-bold text-blue-200">
-                Top 8% Cohort
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

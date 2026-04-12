@@ -16,7 +16,7 @@ import { ROUTES } from "../../constants";
 const MAX_WAIT_MS = 240000; // 4 minutes max before retry screen
 const AVERAGE_RESPONSE_MS = 74000; // average observed generation time
 const PROGRESS_STEP_PERCENT = 5;
-const PROGRESS_CAP_PERCENT = 95;
+const PROGRESS_CAP_PERCENT = 90;
 const PROGRESS_TICK_MS =
   AVERAGE_RESPONSE_MS / (PROGRESS_CAP_PERCENT / PROGRESS_STEP_PERCENT);
 const SCORE_API_URL =
