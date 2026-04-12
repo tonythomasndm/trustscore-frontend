@@ -11,14 +11,18 @@ import {
   Search,
   User as UserIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  Loader2
 } from 'lucide-react';
 import { parseResumeForLinks, type ExtractedLinks } from '../../utils/resumeParser';
+import { savePlatformAccounts } from '../../utils/platformAccounts';
 
 const ConnectPages = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [links, setLinks] = useState<ExtractedLinks>({
@@ -26,6 +30,7 @@ const ConnectPages = () => {
     github: '',
     kaggle: '',
     leetcode: '',
+    hackerrank: '',
     stackoverflow: '',
     behance: '',
     personalWebsite: '',
@@ -84,10 +89,47 @@ const ConnectPages = () => {
     }));
   };
 
-  const handleSave = () => {
-    // In a real app, send to backend. For now, save to localStorage.
-    localStorage.setItem('connected_pages', JSON.stringify(links));
-    navigate('/processing'); 
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Get the logged-in user from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        setError('You must be logged in to save. Please log in first.');
+        setIsSaving(false);
+        return;
+      }
+
+      const user = JSON.parse(storedUser);
+      const userId = user.id;
+
+      if (!userId) {
+        setError('Invalid user session. Please log in again.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Save platform accounts to Supabase
+      const result = await savePlatformAccounts(userId, links as unknown as Record<string, string>);
+
+      if (!result.success) {
+        setError(`Failed to save: ${result.error}`);
+        setIsSaving(false);
+        return;
+      }
+
+      // Also keep a local copy for downstream processing page
+      localStorage.setItem('connected_pages', JSON.stringify(links));
+      navigate('/processing');
+    } catch (err) {
+      console.error('Error saving platform accounts:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setError(`Something went wrong: ${errMsg}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -252,7 +294,31 @@ const ConnectPages = () => {
             </div>
           </div>
 
-          {/* Additional Repositories Toggle */}
+          {/* HackerRank Card */}
+          <div className="p-5 bg-white border shadow-sm rounded-2xl sm:p-6 border-slate-100">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-50">
+                  <Trophy className="w-5 h-5 text-green-600" />
+               </div>
+               <div>
+                 <h3 className="font-bold text-slate-800">HackerRank</h3>
+                 <p className="text-xs text-slate-500 mt-0.5">Display coding challenges and certification badges.</p>
+               </div>
+            </div>
+            <div className="mt-4">
+               <input 
+                 type="url" 
+                 placeholder="hackerrank.com/username"
+                 value={links.hackerrank}
+                 onChange={(e) => handleChange('hackerrank', e.target.value)}
+                 className="w-full px-4 py-3 text-sm font-medium transition-all border bg-slate-50 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-slate-700 placeholder:text-slate-400 placeholder:font-normal"
+               />
+               <button className="w-full py-3 mt-3 text-sm font-semibold transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl">
+                 {links.hackerrank ? 'Link Added' : 'Add link'}
+               </button>
+            </div>
+          </div>
+
           <div className="p-5 mt-8 bg-white border shadow-sm rounded-2xl sm:p-6 border-slate-100">
              <div className="flex items-center gap-2 mb-5">
                <Plus className="w-4 h-4 text-blue-600 bg-blue-50 rounded-full p-0.5" />
@@ -309,7 +375,6 @@ const ConnectPages = () => {
                </button>
              </div>
 
-             {/* Expanded Inputs based on toggles */}
              <div className="mt-5 space-y-3">
                {additionalRepos.stackoverflow && (
                  <input 
@@ -354,7 +419,6 @@ const ConnectPages = () => {
              </div>
           </div>
           
-          {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6 pb-20">
              <button
                onClick={() => navigate('/processing')}
@@ -364,15 +428,22 @@ const ConnectPages = () => {
              </button>
              <button
                onClick={handleSave}
-               className="px-6 py-3 font-medium text-white transition-colors bg-blue-600 shadow-sm rounded-xl hover:bg-blue-700"
+               disabled={isSaving}
+               className="px-6 py-3 font-medium text-white transition-colors bg-blue-600 shadow-sm rounded-xl hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
              >
-               Save Changes
+               {isSaving ? (
+                 <>
+                   <Loader2 className="w-4 h-4 animate-spin" />
+                   Saving...
+                 </>
+               ) : (
+                 'Save Changes'
+               )}
              </button>
           </div>
         </div>
       </main>
 
-      {/* Mock Bottom Nav (matches design) */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex justify-between sm:justify-center sm:gap-16 items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-20">
          <button className="flex flex-col items-center gap-1 transition-colors text-slate-400 hover:text-blue-600">
             <Database className="w-5 h-5" />
