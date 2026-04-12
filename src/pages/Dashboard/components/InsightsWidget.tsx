@@ -1,17 +1,13 @@
-import { CheckCircle2, AlertTriangle, Lightbulb, TrendingUp, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Lightbulb, TrendingUp } from "lucide-react";
+import { parseInsightText } from "../../../utils/insightText";
 
 const getStoredData = () => {
   try {
-    const data = localStorage.getItem('trustscore_data');
+    const data = localStorage.getItem("trustscore_data");
     return data ? JSON.parse(data) : null;
   } catch {
     return null;
   }
-};
-
-const splitSentences = (text: string) => {
-  if (!text) return [];
-  return text.split(/(?<=[.?!])\s+/).filter(s => s.trim().length > 0);
 };
 
 export const InsightListsWidget = () => {
@@ -20,20 +16,19 @@ export const InsightListsWidget = () => {
   const defaultPros = [
     "Zero-Friction Transition from theory to implementation",
     "Exceptional Algorithmic Density scores across platforms",
-    "Verified proficiency in Distributed Systems design"
+    "Verified proficiency in Distributed Systems design",
   ];
-  const pros = apiData?.pros ? splitSentences(apiData.pros) : defaultPros;
+  const pros = apiData?.pros ? parseInsightText(apiData.pros) : defaultPros;
 
   const defaultCons = [
     "Low Network Resonance — LinkedIn profile is sparse",
     "Minimal Peer Endorsements relative to technical skill",
-    "Limited public Mentorship or community leadership indicators"
+    "Limited public Mentorship or community leadership indicators",
   ];
-  const cons = apiData?.cons ? splitSentences(apiData.cons) : defaultCons;
+  const cons = apiData?.cons ? parseInsightText(apiData.cons) : defaultCons;
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      
+    <div className="grid gap-6 md:grid-cols-2">
       {/* Pros */}
       <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
         <div className="flex items-center gap-3 mb-6">
@@ -42,10 +37,12 @@ export const InsightListsWidget = () => {
           </div>
           <div>
             <h3 className="text-base font-extrabold text-[#0a152e] tracking-tight">Pros</h3>
-            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{pros.length} strengths found</p>
+            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">
+              {pros.length} strengths found
+            </p>
           </div>
         </div>
-        
+
         <div className="space-y-3">
           {pros.map((item, i) => (
             <div key={i} className="flex items-start gap-3 bg-emerald-50/50 border border-emerald-100/60 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
@@ -64,10 +61,12 @@ export const InsightListsWidget = () => {
           </div>
           <div>
             <h3 className="text-base font-extrabold text-[#0a152e] tracking-tight">Cons</h3>
-            <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest">{cons.length} concerns flagged</p>
+            <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest">
+              {cons.length} concerns flagged
+            </p>
           </div>
         </div>
-        
+
         <div className="space-y-3">
           {cons.map((item, i) => (
             <div key={i} className="flex items-start gap-3 bg-orange-50/50 border border-orange-100/60 rounded-xl p-4 hover:bg-orange-50 transition-colors">
@@ -77,7 +76,6 @@ export const InsightListsWidget = () => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };
@@ -85,52 +83,44 @@ export const InsightListsWidget = () => {
 export const ImprovementsWidget = () => {
   const apiData = getStoredData();
 
+  const colors = [
+    "from-emerald-500 to-teal-600",
+    "from-blue-500 to-indigo-600",
+    "from-violet-500 to-purple-600",
+    "from-amber-500 to-orange-600",
+  ];
+
   const defaultImprovements = [
     {
       title: "Strengthen LinkedIn Presence",
       description: "Add detailed project descriptions, gather 5+ skill endorsements, and publish technical articles.",
-      impact: "High",
-      color: "from-emerald-500 to-teal-600",
-      badgeBg: "bg-emerald-100 text-emerald-700"
+      color: colors[0],
     },
     {
       title: "Increase Open Source Contributions",
       description: "Contribute to 2-3 active open source projects to demonstrate collaboration skills.",
-      impact: "Medium",
-      color: "from-blue-500 to-indigo-600",
-      badgeBg: "bg-blue-100 text-blue-700"
+      color: colors[1],
     },
     {
       title: "Build Peer Network",
       description: "Engage in code reviews, mentor juniors, and participate in tech communities.",
-      impact: "Medium",
-      color: "from-violet-500 to-purple-600",
-      badgeBg: "bg-violet-100 text-violet-700"
+      color: colors[2],
     },
     {
       title: "Diversify Platform Activity",
       description: "Answer on Stack Overflow and participate in HackerRank challenges regularly.",
-      impact: "Moderate",
-      color: "from-amber-500 to-orange-600",
-      badgeBg: "bg-amber-100 text-amber-700"
-    }
+      color: colors[3],
+    },
   ];
 
   let improvementsList = defaultImprovements;
   if (apiData?.improvements) {
-    const sentences = splitSentences(apiData.improvements);
+    const sentences = parseInsightText(apiData.improvements);
     improvementsList = sentences.map((sent, i) => {
-      const styles = [
-        { impact: "High", color: "from-emerald-500 to-teal-600", badgeBg: "bg-emerald-100 text-emerald-700" },
-        { impact: "Medium", color: "from-blue-500 to-indigo-600", badgeBg: "bg-blue-100 text-blue-700" },
-        { impact: "Medium", color: "from-violet-500 to-purple-600", badgeBg: "bg-violet-100 text-violet-700" },
-        { impact: "Moderate", color: "from-amber-500 to-orange-600", badgeBg: "bg-amber-100 text-amber-700" }
-      ];
-      const style = styles[i % styles.length];
       return {
         title: `Priority Optimization ${i + 1}`,
         description: sent,
-        ...style
+        color: colors[i % colors.length],
       };
     });
   }
@@ -149,9 +139,9 @@ export const ImprovementsWidget = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
         {improvementsList.map((item, index) => (
-          <div 
+          <div
             key={index}
             className="bg-[#fafbfc] rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group cursor-default"
           >
@@ -163,12 +153,6 @@ export const ImprovementsWidget = () => {
                 <h4 className="text-sm font-bold text-[#0a152e] leading-tight">{item.title}</h4>
                 <p className="text-[12px] text-slate-400 leading-relaxed mt-1">{item.description}</p>
               </div>
-            </div>
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100/80">
-              <span className={`text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${item.badgeBg}`}>
-                {item.impact} Impact
-              </span>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
             </div>
           </div>
         ))}

@@ -13,8 +13,12 @@ import {
 } from "lucide-react";
 import { ROUTES } from "../../constants";
 
-const TOTAL_DURATION_MS = 30000; // 30 seconds to reach 100%
 const MAX_WAIT_MS = 240000; // 4 minutes max before retry screen
+const AVERAGE_RESPONSE_MS = 74000; // average observed generation time
+const PROGRESS_STEP_PERCENT = 5;
+const PROGRESS_CAP_PERCENT = 95;
+const PROGRESS_TICK_MS =
+  AVERAGE_RESPONSE_MS / (PROGRESS_CAP_PERCENT / PROGRESS_STEP_PERCENT);
 const SCORE_API_URL =
   "https://trescoml-production.up.railway.app/generate-score";
 
@@ -26,10 +30,11 @@ const Processing = () => {
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestCycle, setRequestCycle] = useState(0);
-  const startTimeRef = useRef<number>(Date.now());
   const isCompleteRef = useRef(false);
   const hasTimedOutRef = useRef(false);
-  const animFrameRef = useRef<number | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const overallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -54,21 +59,10 @@ const Processing = () => {
     },
   ];
 
-  const updateProgress = useCallback(() => {
-    if (isCompleteRef.current || hasTimedOutRef.current) return;
-
-    const elapsed = Date.now() - startTimeRef.current;
-    const newProgress = Math.min((elapsed / TOTAL_DURATION_MS) * 99, 99);
-
-    setProgress(newProgress);
-
-    animFrameRef.current = requestAnimationFrame(updateProgress);
-  }, []);
-
   const cleanupPendingWork = useCallback(() => {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
 
     if (statusIntervalRef.current) {
@@ -123,7 +117,6 @@ const Processing = () => {
         body: JSON.stringify({ user_id: userId }),
         signal: abortController.signal,
       });
-
       const rawBody = await response.text();
       let data: Record<string, unknown> | null = null;
       if (rawBody) {
@@ -175,7 +168,6 @@ const Processing = () => {
   useEffect(() => {
     cleanupPendingWork();
     localStorage.removeItem("trustscore_data");
-    startTimeRef.current = Date.now();
     isCompleteRef.current = false;
     hasTimedOutRef.current = false;
     setProgress(0);
@@ -184,7 +176,20 @@ const Processing = () => {
     setHasTimedOut(false);
     setRequestError(null);
 
-    animFrameRef.current = requestAnimationFrame(updateProgress);
+    progressIntervalRef.current = setInterval(() => {
+      if (isCompleteRef.current || hasTimedOutRef.current) {
+        return;
+      }
+
+      setProgress((current) => {
+        if (current >= PROGRESS_CAP_PERCENT) {
+          return PROGRESS_CAP_PERCENT;
+        }
+
+        return Math.min(current + PROGRESS_STEP_PERCENT, PROGRESS_CAP_PERCENT);
+      });
+    }, PROGRESS_TICK_MS);
+
     statusIntervalRef.current = setInterval(() => {
       setStatusIndex((prev) => (prev + 1) % statusMessages.length);
     }, 4000);
@@ -203,7 +208,7 @@ const Processing = () => {
     return () => {
       cleanupPendingWork();
     };
-  }, [cleanupPendingWork, requestCycle, requestScore, updateProgress]);
+  }, [cleanupPendingWork, requestCycle, requestScore]);
 
   const handleRetry = () => {
     cleanupPendingWork();
@@ -344,6 +349,11 @@ const Processing = () => {
             <p className="text-xs font-bold tracking-widest uppercase text-blue-200/40">
               {Math.round(progress)}% Complete
             </p>
+            {!isComplete && !hasTimedOut && (
+              <p className="text-[10px] font-medium text-blue-200/40">
+                Average processing time ~74 seconds
+              </p>
+            )}
           </div>
 
           {/* Action Buttons — shown contextually */}
