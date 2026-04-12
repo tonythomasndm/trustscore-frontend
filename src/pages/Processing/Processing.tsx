@@ -13,12 +13,11 @@ import {
 } from "lucide-react";
 import { ROUTES } from "../../constants";
 
-const TOTAL_DURATION_MS = 30000; // 30 seconds to reach 100%
-const MAX_WAIT_MS = 240000; // 2 minutes max before retry screen
-const POLL_INTERVAL_MS = 5000;
-const REQUEST_TIMEOUT_MS = 10000;
-const SCORE_API_URL =
-  "https://trescoml-production.up.railway.app/generate-score";
+const MAX_WAIT_MS = 120000; // 2 minutes max before retry screen
+const TOTAL_DURATION_MS = 110000; // Keep UI moving while backend computes
+const REQUEST_TIMEOUT_MS = MAX_WAIT_MS;
+const SCORE_API_URL = "/api/generate-score";
+const MAX_BODY_LOG_CHARS = 1200;
 
 const Processing = () => {
   const navigate = useNavigate();
@@ -32,8 +31,6 @@ const Processing = () => {
   const hasTimedOutRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const overallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -79,16 +76,6 @@ const Processing = () => {
       statusIntervalRef.current = null;
     }
 
-    if (overallTimeoutRef.current) {
-      clearTimeout(overallTimeoutRef.current);
-      overallTimeoutRef.current = null;
-    }
-
-    if (pollTimeoutRef.current) {
-      clearTimeout(pollTimeoutRef.current);
-      pollTimeoutRef.current = null;
-    }
-
     if (requestTimeoutRef.current) {
       clearTimeout(requestTimeoutRef.current);
       requestTimeoutRef.current = null;
@@ -114,9 +101,25 @@ const Processing = () => {
     }
   }, []);
 
-  const pollForScore = useCallback(async () => {
+  const requestScore = useCallback(async () => {
     const userId = getStoredUserId();
+    const startedAt = Date.now();
+
+    console.info("[Processing] Score request started", {
+      requestCycle,
+      userIdPresent: Boolean(userId),
+      apiUrl: SCORE_API_URL,
+      requestTimeoutMs: REQUEST_TIMEOUT_MS,
+    });
+
     if (!userId || isCompleteRef.current || hasTimedOutRef.current) {
+      console.warn("[Processing] Score request stopped early", {
+        reason: !userId
+          ? "missing_user_id"
+          : isCompleteRef.current
+            ? "already_complete"
+            : "already_timed_out",
+      });
       hasTimedOutRef.current = true;
       setHasTimedOut(true);
       cleanupPendingWork();
@@ -126,6 +129,9 @@ const Processing = () => {
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
     requestTimeoutRef.current = setTimeout(() => {
+      console.warn("[Processing] Score request timeout reached; aborting request", {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+      });
       abortController.abort();
     }, REQUEST_TIMEOUT_MS);
 
@@ -135,26 +141,87 @@ const Processing = () => {
         headers: {
           "content-type": "application/json",
         },
+        cache: "no-store",
         body: JSON.stringify({ user_id: userId }),
         signal: abortController.signal,
       });
 
-      console.log("RAW RESPONSE:", response);
-      console.log("STATUS:", response.status);
+      const durationMs = Date.now() - startedAt;
+      const responseContentType = response.headers.get("content-type") || "";
+      const rawBody = await response.text();
+      const bodyPreview =
+        rawBody.length > MAX_BODY_LOG_CHARS
+          ? `${rawBody.slice(0, MAX_BODY_LOG_CHARS)}...<truncated>`
+          : rawBody;
 
-      const data = await response.json();
-      console.log("API DATA:", data);
-      if (data?.status === "success" && data?.data) {
-        localStorage.setItem("trustscore_data", JSON.stringify(data.data));
+      console.info("[Processing] Score response received", {
+        durationMs,
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        responseUrl: response.url,
+        contentType: responseContentType,
+        bodyLength: rawBody.length,
+      });
+
+      if (!response.ok) {
+        console.error("[Processing] Score response is not ok", {
+          status: response.status,
+          statusText: response.statusText,
+          bodyPreview,
+        });
+        throw new Error(`Score API failed with status ${response.status}`);
+      }
+
+      let data: unknown = null;
+      try {
+        data = rawBody ? JSON.parse(rawBody) : null;
+      } catch (parseError) {
+        console.error("[Processing] Failed to parse score response JSON", {
+          parseError,
+          contentType: responseContentType,
+          bodyPreview,
+        });
+        throw new Error("Invalid JSON returned from score API");
+      }
+
+      if (
+        data &&
+        typeof data === "object" &&
+        "status" in data &&
+        "data" in data &&
+        (data as { status?: string }).status === "success" &&
+        (data as { data?: unknown }).data
+      ) {
+        const payload = data as { data: unknown };
+        localStorage.setItem("trustscore_data", JSON.stringify(payload.data));
         isCompleteRef.current = true;
         setIsComplete(true);
         setProgress(100);
         cleanupPendingWork();
+        navigate(ROUTES.DASHBOARD);
         return;
       }
+
+      console.error("[Processing] Score response did not match expected success payload", {
+        data,
+      });
+      throw new Error("Score API response did not include a success payload");
     } catch (error) {
-      if ((error as Error).name !== "AbortError") {
-        console.error("Error while polling score API:", error);
+      if ((error as Error).name === "AbortError") {
+        console.warn("[Processing] Score request aborted", {
+          durationMs: Date.now() - startedAt,
+        });
+      } else {
+        console.error("[Processing] Error while requesting score API", {
+          error,
+        });
+      }
+
+      if (!isCompleteRef.current) {
+        hasTimedOutRef.current = true;
+        setHasTimedOut(true);
+        cleanupPendingWork();
       }
     } finally {
       if (requestTimeoutRef.current) {
@@ -164,13 +231,7 @@ const Processing = () => {
 
       abortControllerRef.current = null;
     }
-
-    if (!isCompleteRef.current && !hasTimedOutRef.current) {
-      pollTimeoutRef.current = setTimeout(() => {
-        void pollForScore();
-      }, POLL_INTERVAL_MS);
-    }
-  }, [cleanupPendingWork, getStoredUserId]);
+  }, [cleanupPendingWork, getStoredUserId, navigate, requestCycle]);
 
   useEffect(() => {
     cleanupPendingWork();
@@ -188,18 +249,12 @@ const Processing = () => {
       setStatusIndex((prev) => (prev + 1) % statusMessages.length);
     }, 4000);
 
-    overallTimeoutRef.current = setTimeout(() => {
-      hasTimedOutRef.current = true;
-      setHasTimedOut(true);
-      cleanupPendingWork();
-    }, MAX_WAIT_MS);
-
-    void pollForScore();
+    void requestScore();
 
     return () => {
       cleanupPendingWork();
     };
-  }, [cleanupPendingWork, pollForScore, requestCycle, updateProgress]);
+  }, [cleanupPendingWork, requestCycle, requestScore, updateProgress]);
 
   const handleRetry = () => {
     cleanupPendingWork();
