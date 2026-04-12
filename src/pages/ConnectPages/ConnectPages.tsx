@@ -1,12 +1,12 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Upload, 
-  Link as LinkIcon, 
-  Code, 
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Upload,
+  Link as LinkIcon,
+  Code,
   Code2,
-  Database, 
-  Plus, 
+  Database,
+  Plus,
   ChevronRight,
   Search,
   User as UserIcon,
@@ -41,15 +41,17 @@ const ConnectPages = () => {
     stackoverflow: false,
     behance: false,
     personalWebsite: false,
-    otherUrl: false
+    otherUrl: false,
   });
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
-      setError('Please upload a PDF file.');
+    if (file.type !== "application/pdf") {
+      setError("Please upload a PDF file.");
       return;
     }
 
@@ -58,7 +60,7 @@ const ConnectPages = () => {
 
     try {
       const extractedLinks = await parseResumeForLinks(file);
-      
+
       setLinks(extractedLinks);
 
       // Update additional toggles based on what was found
@@ -66,26 +68,27 @@ const ConnectPages = () => {
         stackoverflow: !!extractedLinks.stackoverflow,
         behance: !!extractedLinks.behance,
         personalWebsite: !!extractedLinks.personalWebsite,
-        otherUrl: extractedLinks.other.length > 0
+        otherUrl: extractedLinks.other.length > 0,
       });
-
     } catch (err) {
-      console.error('Error parsing resume:', err);
+      console.error("Error parsing resume:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to parse resume: ${errMsg}. Please enter links manually.`);
+      setError(
+        `Failed to parse resume: ${errMsg}. Please enter links manually.`,
+      );
     } finally {
       setIsParsing(false);
       // Reset input so the same file could be selected again if needed
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
   const handleChange = (platform: keyof ExtractedLinks, value: string) => {
-    setLinks(prev => ({
+    setLinks((prev) => ({
       ...prev,
-      [platform]: value
+      [platform]: value,
     }));
   };
 
@@ -153,7 +156,8 @@ const ConnectPages = () => {
         
         <div className="mb-8">
           <h1 className="text-2xl sm:text-[28px] font-extrabold text-[#0a152e] tracking-tight leading-tight mb-3">
-            Connect your<br className="hidden sm:block"/> professional pages
+            Connect your
+            <br className="hidden sm:block" /> professional pages
           </h1>
           <p className="text-sm leading-relaxed text-slate-500 sm:text-base">
             Synchronize your digital footprint to generate a high-fidelity recruitment profile. 
@@ -170,20 +174,22 @@ const ConnectPages = () => {
 
         {/* Upload Button */}
         <div className="mb-10">
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             accept=".pdf"
             className="hidden"
           />
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isParsing}
             className="w-full sm:w-auto bg-[#2b5a9e] hover:bg-[#1e407a] text-white font-medium rounded-xl px-6 py-4 flex items-center justify-center sm:justify-start gap-3 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
           >
             <Upload className="w-5 h-5" />
-            <span>{isParsing ? 'Extracting links...' : 'Import from Resume'}</span>
+            <span>
+              {isParsing ? "Extracting links..." : "Import from Resume"}
+            </span>
             {!isParsing && <ChevronRight className="w-4 h-4 ml-2" />}
           </button>
         </div>
@@ -350,30 +356,41 @@ const ConnectPages = () => {
                  {additionalRepos.behance && <CheckCircle2 className="w-3.5 h-3.5 ml-1" />}
                </button>
 
-               <button 
-                 onClick={() => setAdditionalRepos(p => ({...p, personalWebsite: !p.personalWebsite}))}
-                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                   additionalRepos.personalWebsite 
-                   ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                 }`}
-               >
-                 <UserIcon className="w-4 h-4" /> Personal Website
-                 {additionalRepos.personalWebsite && <CheckCircle2 className="w-3.5 h-3.5 ml-1" />}
-               </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() =>
+                  setAdditionalRepos((p) => ({
+                    ...p,
+                    stackoverflow: !p.stackoverflow,
+                  }))
+                }
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                  additionalRepos.stackoverflow
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <Database className="w-4 h-4" /> Stack Overflow
+                {additionalRepos.stackoverflow && (
+                  <CheckCircle2 className="w-3.5 h-3.5 ml-1" />
+                )}
+              </button>
 
-               <button 
-                 onClick={() => setAdditionalRepos(p => ({...p, otherUrl: !p.otherUrl}))}
-                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                   additionalRepos.otherUrl 
-                   ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                 }`}
-               >
-                 <Plus className="w-4 h-4" /> Other URL
-                 {additionalRepos.otherUrl && <CheckCircle2 className="w-3.5 h-3.5 ml-1" />}
-               </button>
-             </div>
+              <button
+                onClick={() =>
+                  setAdditionalRepos((p) => ({ ...p, behance: !p.behance }))
+                }
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                  additionalRepos.behance
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <Search className="w-4 h-4" /> Behance
+                {additionalRepos.behance && (
+                  <CheckCircle2 className="w-3.5 h-3.5 ml-1" />
+                )}
+              </button>
 
              <div className="mt-5 space-y-3">
                {additionalRepos.stackoverflow && (
