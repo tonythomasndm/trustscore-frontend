@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, Activity, ShieldCheck, Zap, Users, BarChart3 } from 'lucide-react';
+import { ArrowRight, Activity, ShieldCheck, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import heroImage from '../../../assets/hero_abstract_net.png';
 

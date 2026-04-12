@@ -1,39 +1,32 @@
-import { AppLayout } from '../../components/layout/AppLayout';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../../components/layout/Navbar';
 
 const Error = () => {
   const navigate = useNavigate();
 
   return (
-    <AppLayout headerTitle="System Status">
-      
-      {/* Center container */}
-      <div className="flex-1 flex items-center justify-center px-4 bg-[#f8fafc] min-h-[calc(100vh-8rem)] md:min-h-screen">
-        
-        {/*  Card */}
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center relative">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+      <header className="sticky top-0 z-50">
+        <Navbar />
+      </header>
 
-          {/* Glow background */}
+      <div className="flex-1 flex items-center justify-center px-4 bg-[#f8fafc] min-h-[calc(100vh-8rem)] md:min-h-screen">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-transparent blur-2xl opacity-40 rounded-3xl"></div>
 
           <div className="relative z-10 flex flex-col items-center">
-
-            {/* Icon */}
             <div className="w-20 h-20 bg-[#1e4a7a] rounded-full flex items-center justify-center mb-6 shadow-md">
               <span className="text-white text-3xl font-bold">!</span>
             </div>
 
-            {/* Heading */}
             <h2 className="text-2xl font-bold text-[#1e293b] mb-3">
               Something went wrong
             </h2>
 
-            {/* Description */}
             <p className="text-[#64748b] text-sm mb-6">
               Unable to connect to the server. Please try again.
             </p>
 
-            {/* Buttons */}
             <div className="w-full flex flex-col space-y-3">
               <button
                 onClick={() => window.location.reload()}
@@ -50,16 +43,13 @@ const Error = () => {
               </button>
             </div>
 
-            {/* Error Code */}
             <div className="mt-6 px-4 py-2 bg-gray-100 rounded-full text-xs font-semibold text-gray-600">
               ERROR CODE: ERR_CONN_052
             </div>
-
           </div>
         </div>
       </div>
-
-    </AppLayout>
+    </div>
   );
 };
 

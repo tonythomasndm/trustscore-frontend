@@ -1,4 +1,3 @@
-import React from 'react';
 import OTPForm from "../../components/widgets/OTPForm";
 
 const OTP = () => {
