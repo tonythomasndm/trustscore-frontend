@@ -20,6 +20,7 @@ import {
 } from "../../utils/resumeParser";
 import { savePlatformAccounts } from "../../utils/platformAccounts";
 import { supabase } from '../../configs/supaClient';
+import { ROUTES } from "../../constants";
 
 const ConnectPages = () => {
   const navigate = useNavigate();
@@ -132,7 +133,13 @@ const ConnectPages = () => {
       }
 
       // Save platform accounts to Supabase
-      const result = await savePlatformAccounts(userId, links as unknown as Record<string, string>);
+      const result = await savePlatformAccounts(userId, {
+        linkedin: links.linkedin,
+        github: links.github,
+        stackoverflow: links.stackoverflow,
+        hackerrank: links.hackerrank,
+        leetcode: links.leetcode,
+      });
 
       if (!result.success) {
         setError(`Failed to save: ${result.error}`);
@@ -142,7 +149,7 @@ const ConnectPages = () => {
 
       // Also keep a local copy for downstream processing page
       localStorage.setItem('connected_pages', JSON.stringify(links));
-      navigate('/processing');
+      navigate(ROUTES.PROCESSING);
     } catch (err) {
       console.error('Error saving platform accounts:', err);
       const errMsg = err instanceof Error ? err.message : String(err);
