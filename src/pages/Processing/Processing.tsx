@@ -14,7 +14,7 @@ import {
 import { ROUTES } from "../../constants";
 
 const TOTAL_DURATION_MS = 30000; // 30 seconds to reach 100%
-const MAX_WAIT_MS = 120000; // 2 minutes max before retry screen
+const MAX_WAIT_MS = 240000; // 2 minutes max before retry screen
 const POLL_INTERVAL_MS = 5000;
 const REQUEST_TIMEOUT_MS = 10000;
 const SCORE_API_URL =
@@ -139,8 +139,11 @@ const Processing = () => {
         signal: abortController.signal,
       });
 
-      const data = await response.json();
+      console.log("RAW RESPONSE:", response);
+      console.log("STATUS:", response.status);
 
+      const data = await response.json();
+      console.log("API DATA:", data);
       if (data?.status === "success" && data?.data) {
         localStorage.setItem("trustscore_data", JSON.stringify(data.data));
         isCompleteRef.current = true;

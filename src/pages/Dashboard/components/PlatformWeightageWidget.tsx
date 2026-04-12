@@ -1,12 +1,26 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
-const PlatformCard = ({ name, score, color, bg, border }: { name: string; score: number; color: string; bg: string; border: string }) => {
+const PlatformCard = ({
+  name,
+  score,
+  color,
+  bg,
+  border,
+}: {
+  name: string;
+  score: number;
+  color: string;
+  bg: string;
+  border: string;
+}) => {
   const data = [{ value: score }, { value: 100 - score }];
 
   return (
-    <div className={`${bg} ${border} border rounded-2xl p-5 flex flex-col items-center text-center hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group`}>
+    <div
+      className={`${bg} ${border} border rounded-2xl p-5 flex flex-col items-center text-center hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group`}
+    >
       {/* Donut */}
-      <div className="w-20 h-20 relative mb-3">
+      <div className="relative w-20 h-20 mb-3">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -32,11 +46,13 @@ const PlatformCard = ({ name, score, color, bg, border }: { name: string; score:
       </div>
 
       {/* Name + Progress */}
-      <h4 className="text-xs font-extrabold text-slate-700 tracking-tight mb-2">{name}</h4>
-      <div className="w-full flex items-center gap-2">
+      <h4 className="mb-2 text-xs font-extrabold tracking-tight text-slate-700">
+        {name}
+      </h4>
+      <div className="flex items-center w-full gap-2">
         <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700"
+            className="h-full transition-all duration-700 rounded-full"
             style={{ width: `${score}%`, backgroundColor: color }}
           />
         </div>
@@ -49,7 +65,7 @@ const PlatformCard = ({ name, score, color, bg, border }: { name: string; score:
 export const PlatformWeightageWidget = () => {
   const getStoredData = () => {
     try {
-      const data = localStorage.getItem('trustscore_data');
+      const data = localStorage.getItem("trustscore_data");
       return data ? JSON.parse(data) : null;
     } catch {
       return null;
@@ -58,26 +74,84 @@ export const PlatformWeightageWidget = () => {
 
   const apiData = getStoredData();
   const getScore = (key: string, defaultScore: number) => {
-     return apiData?.platform_scores?.[key] ?? defaultScore;
+    return apiData?.platform_scores?.[key] ?? defaultScore;
   };
 
   const platforms = [
-    { name: 'LeetCode',      score: getScore('leetcode', 92), color: '#eab308', bg: 'bg-yellow-50', border: 'border-yellow-100' },
-    { name: 'GitHub',        score: getScore('github', 88),   color: '#8b5cf6', bg: 'bg-violet-50', border: 'border-violet-100' },
-    { name: 'LinkedIn',      score: getScore('linkedin', 74), color: '#3b82f6', bg: 'bg-blue-50',   border: 'border-blue-100' },
-    { name: 'StackOverflow', score: getScore('stack_overflow', 65), color: '#f97316', bg: 'bg-orange-50', border: 'border-orange-100' },
-    { name: 'HackerRank',    score: getScore('hackerrank', 78), color: '#10b981', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-  ];
+    {
+      name: "LeetCode",
+      key: "leetcode",
+      defaultScore: 92,
+      color: "#eab308",
+      bg: "bg-yellow-50",
+      border: "border-yellow-100",
+    },
+    {
+      name: "GitHub",
+      key: "github",
+      defaultScore: 88,
+      color: "#8b5cf6",
+      bg: "bg-violet-50",
+      border: "border-violet-100",
+    },
+    {
+      name: "LinkedIn",
+      key: "linkedin",
+      defaultScore: 74,
+      color: "#3b82f6",
+      bg: "bg-blue-50",
+      border: "border-blue-100",
+    },
+    {
+      name: "StackOverflow",
+      key: "stack_overflow",
+      defaultScore: 65,
+      color: "#f97316",
+      bg: "bg-orange-50",
+      border: "border-orange-100",
+    },
+    {
+      name: "HackerRank",
+      key: "hackerrank",
+      defaultScore: 78,
+      color: "#10b981",
+      bg: "bg-emerald-50",
+      border: "border-emerald-100",
+    },
+  ]
+    .map((p) => {
+      const rawScore = getScore(p.key, p.defaultScore);
+
+      // ❌ skip if -1
+      if (rawScore === -1) return null;
+
+      return {
+        ...p,
+        score: Math.round(rawScore / 10), // ✅ divide by 10
+      };
+    })
+    .filter(Boolean); // remove null values
 
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200/60">
+    <div className="p-8 bg-white border shadow-sm rounded-3xl border-slate-200/60">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-extrabold text-[#0a152e] tracking-tight">Platform Weightage</h3>
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{platforms.length} Sources</span>
+        <h3 className="text-sm font-extrabold text-[#0a152e] tracking-tight">
+          Platform Weightage
+        </h3>
+        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+          {platforms.length} Sources
+        </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {platforms.map((p) => (
-          <PlatformCard key={p.name} name={p.name} score={p.score} color={p.color} bg={p.bg} border={p.border} />
+          <PlatformCard
+            key={p.name}
+            name={p.name}
+            score={p.score}
+            color={p.color}
+            bg={p.bg}
+            border={p.border}
+          />
         ))}
       </div>
     </div>

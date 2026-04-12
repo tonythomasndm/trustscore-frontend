@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
-import { AuthenticityWidget } from './components/AuthenticityWidget';
-import { PlatformWeightageWidget } from './components/PlatformWeightageWidget';
-import { InsightListsWidget, ImprovementsWidget } from './components/InsightsWidget';
-import { Download } from 'lucide-react';
-import { 
-  MobileTopNav, 
-  MobileAuthenticityWidget, 
-  MobileSourceHealthWidget, 
+import { useState, useEffect } from "react";
+import { AuthenticityWidget } from "./components/AuthenticityWidget";
+import { PlatformWeightageWidget } from "./components/PlatformWeightageWidget";
+import {
+  InsightListsWidget,
+  ImprovementsWidget,
+} from "./components/InsightsWidget";
+import { Download } from "lucide-react";
+import {
+  MobileTopNav,
+  MobileAuthenticityWidget,
+  MobileSourceHealthWidget,
   MobileProsConsWidget,
   MobileImprovementsWidget,
-  MobileBottomNav 
-} from './components/MobileDashboardWidgets';
+  MobileBottomNav,
+} from "./components/MobileDashboardWidgets";
 
 const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -20,8 +23,8 @@ const Dashboard = () => {
       setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const handleDownloadPDF = () => {
@@ -47,7 +50,6 @@ const Dashboard = () => {
     <div className="min-h-screen font-sans bg-[#f0f2f5]">
       {/* Main Content */}
       <main className="max-w-[1440px] mx-auto px-8 lg:px-12 py-8 space-y-6">
-        
         {/* Export Button */}
         <div className="flex justify-end print:hidden">
           <button
@@ -60,22 +62,22 @@ const Dashboard = () => {
         </div>
 
         {/* Row 1: Score Hero (full width) */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.05s" }}>
           <AuthenticityWidget />
         </div>
 
         {/* Row 2: Platform Weightage (full width) */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <PlatformWeightageWidget />
         </div>
 
         {/* Row 3: Pros & Cons */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
           <InsightListsWidget />
         </div>
 
         {/* Row 4: Improvements */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <ImprovementsWidget />
         </div>
       </main>
