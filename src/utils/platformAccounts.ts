@@ -2,15 +2,28 @@ import { supabase } from '../configs/supaClient';
 
 /**
  * Enum values for the `platform_name` column in `platform_accounts`.
- * Must match the Supabase `platform` enum: github, leetcode, linkedin, hackerrank, kaggle
+ * Must match the database enum exactly.
  */
-export type PlatformName = 'github' | 'leetcode' | 'linkedin' | 'hackerrank' | 'kaggle';
+export type PlatformName =
+  | 'github'
+  | 'linkedin'
+  | 'stack_overflow'
+  | 'leetcode'
+  | 'hackerrank';
 
 export interface PlatformAccountRow {
   user_id: string;
   platform_name: PlatformName;
   username: string;
   profile_url: string;
+}
+
+export interface PlatformLinksInput {
+  github?: string;
+  linkedin?: string;
+  stackoverflow?: string;
+  leetcode?: string;
+  hackerrank?: string;
 }
 
 /**
@@ -36,9 +49,10 @@ export function extractUsername(platform: PlatformName, url: string): string {
         // github.com/username
         return segments[0] ?? '';
 
-      case 'kaggle':
-        // kaggle.com/username
-        return segments[0] ?? '';
+      case 'stack_overflow':
+        // stackoverflow.com/users/{id}/{username}
+        if (segments[0] === 'users' && segments[2]) return segments[2];
+        return segments.at(-1) ?? segments[0] ?? '';
 
       case 'leetcode':
         // leetcode.com/u/username OR leetcode.com/username
@@ -66,20 +80,22 @@ export function extractUsername(platform: PlatformName, url: string): string {
  */
 export function buildPlatformRows(
   userId: string,
-  links: Record<string, string>
+  links: PlatformLinksInput
 ): PlatformAccountRow[] {
   // Map from frontend field names → DB platform_name enum values
-  const mapping: Record<string, PlatformName> = {
+  const mapping: Record<keyof PlatformLinksInput, PlatformName> = {
     github: 'github',
-    leetcode: 'leetcode',
     linkedin: 'linkedin',
+    stackoverflow: 'stack_overflow',
+    leetcode: 'leetcode',
     hackerrank: 'hackerrank',
-    kaggle: 'kaggle',
   };
 
   const rows: PlatformAccountRow[] = [];
 
-  for (const [field, platformName] of Object.entries(mapping)) {
+  for (const [field, platformName] of Object.entries(mapping) as Array<
+    [keyof PlatformLinksInput, PlatformName]
+  >) {
     const url = links[field]?.trim();
     if (!url) continue;
 
@@ -107,7 +123,7 @@ export function buildPlatformRows(
  */
 export async function savePlatformAccounts(
   userId: string,
-  links: Record<string, string>
+  links: PlatformLinksInput
 ): Promise<{ success: boolean; error?: string }> {
   const rows = buildPlatformRows(userId, links);
 

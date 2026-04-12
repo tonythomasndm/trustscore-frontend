@@ -14,7 +14,10 @@ import {
 import { ROUTES } from '../../constants';
 
 const TOTAL_DURATION_MS = 30000; // 30 seconds to reach 100%
-const MAX_TIMEOUT_MS = 60000;   // 60 seconds max before retry
+const MAX_WAIT_MS = 120000; // 2 minutes max before retry screen
+const POLL_INTERVAL_MS = 5000;
+const REQUEST_TIMEOUT_MS = 10000;
+const SCORE_API_URL = 'http://127.0.0.1:8000/generate-score';
 
 const Processing = () => {
   const navigate = useNavigate();
@@ -22,9 +25,15 @@ const Processing = () => {
   const [statusIndex, setStatusIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [requestCycle, setRequestCycle] = useState(0);
   const startTimeRef = useRef<number>(Date.now());
+  const isCompleteRef = useRef(false);
+  const hasTimedOutRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const overallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const statusMessages = [
@@ -36,7 +45,7 @@ const Processing = () => {
   ];
 
   const updateProgress = useCallback(() => {
-    if (isComplete || hasTimedOut) return;
+    if (isCompleteRef.current || hasTimedOutRef.current) return;
 
     const elapsed = Date.now() - startTimeRef.current;
     const newProgress = Math.min((elapsed / TOTAL_DURATION_MS) * 99, 99);
@@ -44,91 +53,141 @@ const Processing = () => {
     setProgress(newProgress);
 
     animFrameRef.current = requestAnimationFrame(updateProgress);
-  }, [isComplete, hasTimedOut]);
+  }, []);
 
-  const runApiCall = useCallback(() => {
-    const storedUser = localStorage.getItem('user');
-    let userId = '';
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        userId = user.id;
-      } catch (e) {}
+  const cleanupPendingWork = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+
+    if (statusIntervalRef.current) {
+      clearInterval(statusIntervalRef.current);
+      statusIntervalRef.current = null;
+    }
+
+    if (overallTimeoutRef.current) {
+      clearTimeout(overallTimeoutRef.current);
+      overallTimeoutRef.current = null;
+    }
+
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+
+    if (requestTimeoutRef.current) {
+      clearTimeout(requestTimeoutRef.current);
+      requestTimeoutRef.current = null;
     }
 
     if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-    }
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    
-    timeoutRef.current = setTimeout(() => {
-      setHasTimedOut(true);
-      abortController.abort();
-    }, MAX_TIMEOUT_MS);
-
-    if (userId) {
-      fetch(`https://ml-model-deployment-simulation-production.up.railway.app/generate-score?user_id=${userId}`, {
-        method: 'POST',
-        signal: abortController.signal
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
-          // Save to local storage for Dashboard to pick up
-          localStorage.setItem('trustscore_data', JSON.stringify(data.data));
-          setIsComplete(true);
-          setProgress(100);
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        } else {
-          setHasTimedOut(true);
-        }
-      })
-      .catch(err => {
-        if (err.name !== 'AbortError') {
-           setHasTimedOut(true);
-        }
-      });
-    } else {
-      setTimeout(() => { setHasTimedOut(true); }, 2000);
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
   }, []);
 
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-    animFrameRef.current = requestAnimationFrame(updateProgress);
-    runApiCall();
+  const getStoredUserId = useCallback(() => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      return '';
+    }
 
-    const statusInterval = setInterval(() => {
-      setStatusIndex((prev) => (prev + 1) % 5);
-    }, 4000);
+    try {
+      const user = JSON.parse(storedUser);
+      return user?.id ?? '';
+    } catch {
+      return '';
+    }
+  }, []);
 
-    // Max timeout — if not complete after 60s, show retry
-    timeoutRef.current = setTimeout(() => {
-      if (!isComplete) {
-        setHasTimedOut(true);
+  const pollForScore = useCallback(async () => {
+    const userId = getStoredUserId();
+    if (!userId || isCompleteRef.current || hasTimedOutRef.current) {
+      hasTimedOutRef.current = true;
+      setHasTimedOut(true);
+      cleanupPendingWork();
+      return;
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    requestTimeoutRef.current = setTimeout(() => {
+      abortController.abort();
+    }, REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(SCORE_API_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId }),
+        signal: abortController.signal,
+      });
+
+      const data = await response.json();
+
+      if (data?.status === 'success' && data?.data) {
+        localStorage.setItem('trustscore_data', JSON.stringify(data.data));
+        isCompleteRef.current = true;
+        setIsComplete(true);
+        setProgress(100);
+        cleanupPendingWork();
+        return;
       }
-    }, MAX_TIMEOUT_MS);
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error while polling score API:', error);
+      }
+    } finally {
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
+        requestTimeoutRef.current = null;
+      }
 
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      clearInterval(statusInterval);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (abortControllerRef.current) abortControllerRef.current.abort();
-    };
-  }, [updateProgress, runApiCall]);
+      abortControllerRef.current = null;
+    }
 
-  const handleRetry = () => {
+    if (!isCompleteRef.current && !hasTimedOutRef.current) {
+      pollTimeoutRef.current = setTimeout(() => {
+        void pollForScore();
+      }, POLL_INTERVAL_MS);
+    }
+  }, [cleanupPendingWork, getStoredUserId]);
+
+  useEffect(() => {
+    cleanupPendingWork();
+    localStorage.removeItem('trustscore_data');
+    startTimeRef.current = Date.now();
+    isCompleteRef.current = false;
+    hasTimedOutRef.current = false;
     setProgress(0);
+    setStatusIndex(0);
     setIsComplete(false);
     setHasTimedOut(false);
-    setStatusIndex(0);
-    startTimeRef.current = Date.now();
-    
-    runApiCall();
+
     animFrameRef.current = requestAnimationFrame(updateProgress);
+    statusIntervalRef.current = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % statusMessages.length);
+    }, 4000);
+
+    overallTimeoutRef.current = setTimeout(() => {
+      hasTimedOutRef.current = true;
+      setHasTimedOut(true);
+      cleanupPendingWork();
+    }, MAX_WAIT_MS);
+
+    void pollForScore();
+
+    return () => {
+      cleanupPendingWork();
+    };
+  }, [cleanupPendingWork, pollForScore, requestCycle, updateProgress]);
+
+  const handleRetry = () => {
+    cleanupPendingWork();
+    setRequestCycle((current) => current + 1);
   };
 
   const handleGoToDashboard = () => {
